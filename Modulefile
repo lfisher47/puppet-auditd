@@ -1,0 +1,8 @@
+name 'lfisher47-auditd'
+version '0.0.2'
+author 'lfisher47'
+summary 'Auditd STIG rule enforcement'
+description 'Auditd STIG rule enforcement'
+license 'GNU GPL 2.0'
+source 'git://github.com/lfisher47/puppet-auditd'
+project_page 'https://github.com/lfisher47/puppet-auditd'
