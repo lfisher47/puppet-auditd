@@ -15,8 +15,6 @@
 ## Set failure mode to panic
 -f 2
 
-## Make the auditd Configuration Immutable
--e 2
 
 ## Things that affect auditing
 -w /etc/audit/auditd.conf
@@ -112,3 +110,6 @@
 -a always,exit -F arch=b32 -S chmod -S fchmod -S fchmodat -F auid>=500 -F auid!=4294967295 -k perm_mod
 -a always,exit -F arch=b32 -S chown -S fchown -S fchownat -S lchown -F auid>=500 -F auid!=4294967295 -k perm_mod
 -a always,exit -F arch=b32 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=500 -F auid!=4294967295 -k perm_mod
+
+## Make the auditd Configuration Immutable
+-e 2
