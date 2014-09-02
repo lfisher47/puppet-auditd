@@ -20,7 +20,9 @@
 # Dependencies:
 #  None
 ############################################################
-class auditd {
+class auditd (
+  $mailaccount = 'root'
+){
   package { 'audit':
     ensure => 'latest',
   }
@@ -30,6 +32,15 @@ class auditd {
     enable    => true,
     hasstatus => true,
     require   => Package['audit'],
+  }
+
+  #Rotate auditd logs when syslog gets rotated.
+  file { '/etc/cron.weekly/auditd':
+    ensure  => 'file',
+    mode    => '0700',
+    owner   => 'root',
+    group   => 'root',
+    content => '/sbin/service auditd rotate',
   }
 
   #RHEL-06-000383, RHEL-06-000384, RHEL-06-000522
@@ -57,14 +68,14 @@ class auditd {
     context => '/files/etc/audit/auditd.conf',
     lens    => 'simplevars.lns',
     incl    => '/etc/audit/auditd.conf',
-    changes => 'set num_logs 5',
+    changes => 'set num_logs 7',
   }
   #RHEL-06-000160
   augeas { 'Configure auditd Max Log File Size':
     context => '/files/etc/audit/auditd.conf',
     lens    => 'simplevars.lns',
     incl    => '/etc/audit/auditd.conf',
-    changes => 'set max_log_file 6',
+    changes => 'set max_log_file 10',
   }
   #RHEL-06-000161
   augeas { 'Configure auditd max_log_file_action Upon Reaching Maximum Log Size':
@@ -78,20 +89,20 @@ class auditd {
     context => '/files/etc/audit/auditd.conf',
     lens    => 'simplevars.lns',
     incl    => '/etc/audit/auditd.conf',
-    changes => 'set space_left_action email',
+    changes => 'set space_left_action syslog',
   }
   augeas { 'Configure auditd admin_space_left Action on Low Disk Space':
     context => '/files/etc/audit/auditd.conf',
     lens    => 'simplevars.lns',
     incl    => '/etc/audit/auditd.conf',
-    changes => 'set admin_space_left_action single',
+    changes => 'set admin_space_left_action suspend',
   }
   #RHEL-06-000313
   augeas { 'Configure auditd mail_acct Action on Low Disk Space':
     context => '/files/etc/audit/auditd.conf',
     lens    => 'simplevars.lns',
     incl    => '/etc/audit/auditd.conf',
-    changes => 'set action_mail_acct root',
+    changes => "set action_mail_acct $mailaccount",
   }
   #RHEL-06-000509
   augeas { 'Configure auditd to use audispd plugin':
@@ -106,14 +117,58 @@ class auditd {
     context => '/files/etc/audit/auditd.conf',
     lens    => 'simplevars.lns',
     incl    => '/etc/audit/auditd.conf',
-    changes => 'set disk_full_action syslog',
+    changes => 'set disk_full_action suspend',
   }
   #RHEL-06-000511
   augeas { 'Configure auditd disk_error_action Action on Disk Errors':
     context => '/files/etc/audit/auditd.conf',
     lens    => 'simplevars.lns',
     incl    => '/etc/audit/auditd.conf',
-    changes => 'set disk_error_action syslog',
+    changes => 'set disk_error_action suspend',
+  }
+  
+  #2.6.1
+  augeas { 'Configure auditd priority_boost':
+    context => '/files/etc/audit/auditd.conf',
+    lens    => 'simplevars.lns',
+    incl    => '/etc/audit/auditd.conf',
+    changes => 'set priority_boost 3',
+  }
+  augeas { 'Configure auditd flush':
+    context => '/files/etc/audit/auditd.conf',
+    lens    => 'simplevars.lns',
+    incl    => '/etc/audit/auditd.conf',
+    changes => 'set flush INCREMENTAL',
+  }
+  augeas { 'Configure auditd frequency':
+    context => '/files/etc/audit/auditd.conf',
+    lens    => 'simplevars.lns',
+    incl    => '/etc/audit/auditd.conf',
+    changes => 'set freq 20',
+  }
+  augeas { 'Configure auditd dispatcher':
+    context => '/files/etc/audit/auditd.conf',
+    lens    => 'simplevars.lns',
+    incl    => '/etc/audit/auditd.conf',
+    changes => 'set dispatcher /sbin/audispd',
+  }
+  augeas { 'Configure auditd libwrap':
+    context => '/files/etc/audit/auditd.conf',
+    lens    => 'simplevars.lns',
+    incl    => '/etc/audit/auditd.conf',
+    changes => 'set use_libwrap no',
+  }
+  augeas { 'Configure auditd space left':
+    context => '/files/etc/audit/auditd.conf',
+    lens    => 'simplevars.lns',
+    incl    => '/etc/audit/auditd.conf',
+    changes => 'set space_left 100',
+  }
+  augeas { 'Configure auditd admin space left':
+    context => '/files/etc/audit/auditd.conf',
+    lens    => 'simplevars.lns',
+    incl    => '/etc/audit/auditd.conf',
+    changes => 'set admin_space_left 75',
   }
 
   file { '/etc/audit/audit.rules':
