@@ -1,5 +1,5 @@
 name 'lfisher47-auditd'
-version '0.0.2'
+version '0.0.3'
 author 'lfisher47'
 summary 'Auditd STIG rule enforcement'
 description 'Auditd STIG rule enforcement'
