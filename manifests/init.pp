@@ -22,6 +22,7 @@
 ############################################################
 class auditd (
   $mailaccount = 'root'
+  $audispd     = 'yes'
 ){
   package { 'audit':
     ensure => 'latest',
@@ -109,7 +110,7 @@ class auditd (
     context => '/files/etc/audisp/plugins.d/syslog.conf',
     lens    => 'simplevars.lns',
     incl    => '/etc/audisp/plugins.d/syslog.conf',
-    changes => 'set active yes',
+    changes => "set active $audispd",
     notify  => Service['auditd'],
   }
   #RHEL-06-000510
