@@ -21,8 +21,8 @@
 #  None
 ############################################################
 class auditd (
-  $mailaccount = 'root'
-  $audispd     = 'yes'
+  $mailaccount = 'root',
+  $audispd     = 'yes',
 ){
   package { 'audit':
     ensure => 'latest',
