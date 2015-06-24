@@ -1,10 +1,8 @@
-## Pulled from SSG Rules and compared against STIG for RHEL 6
-##
 ## This file contains the auditctl rules that are loaded
 ## whenever the audit daemon is started via the initscripts.
 ## The rules are simply the parameters that would be passed
 ## to auditctl.
-##
+
 ## First rule - delete all
 -D
 
@@ -12,104 +10,92 @@
 ## Make this bigger for busy systems
 -b 8192
 
-## Set failure mode to panic
--f 2
+## Feel free to add below this line. See auditctl man page
 
+##Exclude certain types of commands
+-a exclude,always -F msgtype=CWD
 
-## Things that affect auditing
--w /etc/audit/auditd.conf
--w /etc/audit/audit.rules
+##Warn of MAC policy changes
+-w /etc/selinux -p wa -k MAC-policy
 
-## Record Events that Modify User/Group Information
-## RHEL-06-000174, RHEL-06-000175, RHEL-06-000176, RHEL-06-000177
-## audit_account_changes
--w /etc/group -p wa -k audit_account_changes
--w /etc/passwd -p wa -k audit_account_changes
--w /etc/gshadow -p wa -k audit_account_changes
--w /etc/shadow -p wa -k audit_account_changes
--w /etc/security/opasswd -p wa -k audit_account_changes
+##Warn of actions taken as root
+-w /etc/sudoers -p wa -k scope
 
-## Record Events that Modify the System's Network Environment
-## RHEL-06-000182
-## audit_network_modifications
--a always,exit -F arch=b32 -S sethostname -S setdomainname -k audit_network_modifications
--w /etc/issue -p wa -k audit_network_modifications
--w /etc/issue.net -p wa -k audit_network_modifications
--w /etc/hosts -p wa -k audit_network_modifications
--w /etc/sysconfig/network -p wa -k audit_network_modifications
+##Log changes clearing of log files
+-a always,exit -F arch=b32 -F dir=/var/log -S truncate -S unlink -S rename -k LOGS_INIT
 
-## Record Events that Modify the System's Mandatory Access Controls
-## RHEL-06-000183
-## MAC-policy
--w /etc/selinux/ -p wa -k MAC-policy
+##Warn for changes to certain directories
+-w /sbin -p wa
+-w /usr/bin -p wa
+-w /var/lib -p wa
+-w /lib -p wa
+-w /usr/lib -p wa
+-w /etc -p wa
+-w /bin -p wa
 
-## Record Attempts to Alter Logon and Logout Events
-## logins
+##Audit events that modify the date/time information
+-a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -k time-change
+-a always,exit -F arch=b32 -S clock_settime -k time-change
+-w /etc/localtime -p wa -k time-change
+
+##Record events that modify the systems' network environment
+-a exit,always -F arch=b32 -S sethostname -S setdomainname -k system-locale
+-w /etc/issue -p wa -k system-locale
+-w /etc/issue.net -p wa -k system-locale
+-w /etc/hosts -p wa -k system-locale
+-w /etc/sysconfig/network -p wa -k system-locale
+
+##Record events to alter logon/logoff events
 -w /var/log/faillog -p wa -k logins
 -w /var/log/lastlog -p wa -k logins
 
-## Record Attempts to Alter Process and Session Initiation Information
-## session
+##Record events that attempt to alter session information
 -w /var/run/utmp -p wa -k session
 -w /var/log/btmp -p wa -k session
 -w /var/log/wtmp -p wa -k session
 
-## Ensure auditd Collects Unauthorized Access Attempts to Files (unsuccessful)
-## RHEL-06-000197
-## access
--a always,exit -F arch=b32 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EACCES -F auid>=500 -F auid!=4294967295 -k access
--a always,exit -F arch=b32 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EPERM -F auid>=500 -F auid!=4294967295 -k access
+##Log all identity programs to ensure no changes/additions
+-w /etc/group -p wa -k identity
+-w /etc/passwd -p wa -k identity
+-w /etc/gshadow -p wa -k identity
+-w /etc/shadow -p wa -k identity
+-w /etc/security/opasswd -p wa -k identity
 
-## Ensure auditd Collects Information on the Use of Privileged Commands
-## RHEL-06-000198
-## privileged
-##
-## Find setuid binaries with the following command:
-##   find / -xdev -type f -perm -4000 -o -perm -2000 2>/dev/null
-## and create as many copies of the following line as necessary, one each for each discovered setuid binary
-#-a always,exit -F path=SETUID_PROG_PATH -F perm=x -F auid>=500 -F auid!=4294967295 -k privileged
-
-## Ensure auditd Collects Information on Exporting to Media (successful)
-## RHEL-06-000199
-## export
--a always,exit -F arch=b32 -S mount -F auid>=500 -F auid!=4294967295 -k export
-# Following line may be buggy, pulled from STIG
-#-a always,exit -F arch=b32 -S mount -F auid==0 -k export 
-
-## Ensure auditd Collects File Deletion Events by User
-## RHEL-06-000200
-## delete
--a always,exit -F arch=b32 -S unlink -S unlinkat -S rename -S renameat -F auid>=500 -F auid!=4294967295 -k delete
-
-## Ensure auditd Collects System Administrator Actions
-## RHEL-06-000201
-## actions
--w /etc/sudoers -p wa -k actions
-
-## Ensure auditd Collects Information on Kernel Module Loading and Unloading
-## RHEL-06-000202
-## modules
+##Monitor use of commands to load/unload kernel modules
 -w /sbin/insmod -p x -k modules
 -w /sbin/rmmod -p x -k modules
 -w /sbin/modprobe -p x -k modules
 -a always,exit -F arch=b32 -S init_module -S delete_module -k modules
 
-## Record Attempts to Alter Time through adjtimex, settimeofday, stime, and clock_settime
-## RHEL-06-000165, RHEL-06-000167, RHEL-06-000169, RHEL-06-000171
-## audit_time_rules
--a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -S clock_settime -k audit_time_rules
+##Monitor unauthorized file access
+-a always,exit -F arch=b32 -S creat -S open -S openat -S open_by_handle_at -S truncate -S ftruncate -F exit=-EACCES -F auid>=500 -F auid!=4294967295 -k access
+-a always,exit -F arch=b32 -S creat -S open -S openat -S open_by_handle_at -S truncate -S ftruncate -F exit=-EPERM -F auid>=500 -F auid!=4294967295 -k access
 
-## Record Attempts to Alter the localtime File
-## RHEL-06-000173
-## audit_time_rules
--w /etc/localtime -p wa -k audit_time_rules
+##Record file deletion events
+-a always,exit -F arch=b32 -S unlink -S unlinkat -S rename -S renameat -F auid>=500 -F auid!=4294967295 -k delete
 
-## Record Events that Modify the System's Discretionary Access Controls
-## RHEL-06-000184, RHEL-06-000186, RHEL-06-000187, RHEL-06-000188, RHEL-06-000189, RHEL-06-000190, RHEL-06-000191, RHEL-06-000192, RHEL-06-000193, RHEL-06-000194, RHEL-06-000195, RHEL-06-000196
-## perm_mod
+##Monitor file permission changes
 -a always,exit -F arch=b32 -S chmod -S fchmod -S fchmodat -F auid>=500 -F auid!=4294967295 -k perm_mod
 -a always,exit -F arch=b32 -S chown -S fchown -S fchownat -S lchown -F auid>=500 -F auid!=4294967295 -k perm_mod
 -a always,exit -F arch=b32 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=500 -F auid!=4294967295 -k perm_mod
 
-## Make the auditd Configuration Immutable
+
+##Monitor for execution of privileged commands
+-a always,exit -F arch=b32 -F path=/bin/ping -F perm=x -F auid>=500 -F auid!=4294967295 -k privileged
+-a always,exit -F arch=b32 -F path=/bin/mount -F perm=x -F auid>=500 -F auid!=4294967295 -k privileged
+-a always,exit -F arch=b32 -F path=/bin/umount -F perm=x -F auid>=500 -F auid!=4294967295 -k privileged
+-a always,exit -F arch=b32 -F path=/bin/su -F perm=x -F auid>=500 -F auid!=4294967295 -k privileged
+-a always,exit -F arch=b32 -F path=/bin/fusermount -F perm=x -F auid>=500 -F auid!=4294967295 -k privileged
+-a always,exit -F arch=b32 -F path=/sbin/unix_chkpwd -F perm=x -F auid>=500 -F auid!=4294967295 -k privileged
+-a always,exit -F arch=b32 -F path=/sbin/pam_timestamp_check -F perm=x -F auid>=500 -F auid!=4294967295 -k privileged
+-a always,exit -F arch=b32 -F path=/sbin/netreport -F perm=x -F auid>=500 -F auid!=4294967295 -k privileged
+
+##Monitor exporting events
+-a always,exit -F arch=b32 -S mount -F auid>=500 -F auid!=4294967295 -k export
+
+##Monitor file deletion events
+-a always,exut -F arch=b32 -S rmdir -S unlink -S unlinkat -S rename -S renameat -F auid >=500 -F auid!=4294967295 -k delete
+
+##Make the auditd Configuration Immutable
 -e 2
+
