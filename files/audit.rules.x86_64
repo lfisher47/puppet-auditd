@@ -16,7 +16,7 @@
 -a exclude,always -F msgtype=CWD
 
 ##Warn of MAC policy changes
--w /etc/selinux -p wa -k MAC-policy
+-w /etc/selinux/ -p wa -k MAC-policy
 
 ##Warn of actions taken as root
 -w /etc/sudoers -p wa -k scope
@@ -41,7 +41,7 @@
 -w /etc/localtime -p wa -k time-change
 
 ##Record events that modify the systems' network environment
--a exit,always -F arch=b64 -S sethostname -S setdomainname -k system-locale
+-a always,exit -F arch=b64 -S sethostname -S setdomainname -k system-locale
 -w /etc/issue -p wa -k system-locale
 -w /etc/issue.net -p wa -k system-locale
 -w /etc/hosts -p wa -k system-locale
@@ -76,7 +76,7 @@
 -a always,exit -F arch=b64 -S creat -S open -S openat -S open_by_handle_at -S truncate -S ftruncate -F exit=-EPERM -F auid>=500 -F auid!=4294967295 -k access
 
 ##Record file deletion events
--a always,exit -F arch=b64 -S unlink -S unlinkat -S rename -S renameat -F auid>=500 -F auid!=4294967295 -k delete
+-a always,exit -F arch=b64 -S rmdir -S unlink -S unlinkat -S rename -S renameat -F auid>=500 -F auid!=4294967295 -k delete
 
 ##Monitor file permission changes
 -a always,exit -F arch=b32 -S chmod -S fchmod -S fchmodat -F auid>=500 -F auid!=4294967295 -k perm_mod
@@ -100,9 +100,6 @@
 
 ##Monitor exporting events
 -a always,exit -F arch=b64 -S mount -F auid>=500 -F auid!=4294967295 -k export
-
-##Monitor file deletion events
--a always,exut -F arch=b64 -S rmdir -S unlink -S unlinkat -S rename -S renameat -F auid >=500 -F auid!=4294967295 -k delete
 
 ##Make the auditd Configuration Immutable
 -e 2
