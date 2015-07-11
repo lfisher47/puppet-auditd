@@ -21,6 +21,7 @@
 #  None
 ############################################################
 class auditd (
+  $privileged_commands = $::privileged_commands,
   $mailaccount = 'root',
   $audispd     = 'yes',
 ){
@@ -177,6 +178,6 @@ class auditd (
     group  => 'root',
     mode   => '0640',
     notify => Service['auditd'],
-    source => "puppet:///modules/auditd/audit.rules.${::architecture}",
+    content => template("${module_name}/audit.rules.${::architecture}.erb"),
   }
 }
