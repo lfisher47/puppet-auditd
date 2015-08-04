@@ -16,7 +16,7 @@ end
 Facter.add(:privileged_commands) do
     confine :kernel  => :linux
     setcode do
-        command_list = [Facter::Util::Resolution.exec('find / -xdev -type f -perm -4000 -o -perm -2000 2>/dev/null']
+        command_list = [Facter::Util::Resolution.exec('find / -xdev -type f -perm -4000 -o -perm -2000 2>/dev/null')]
     end
 end
 
